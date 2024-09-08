@@ -1,13 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const shortid = require("shortid");
+// const Form = require("../models/Form");
 const Form = require("../models/Form");
+// const auth = require("../middleware/auth");
+const auth = require("../ middleware/auth");
 
-// Generate new form link
-router.post("/generate-link", async (req, res) => {
+// Protect the form creation route
+router.post("/generate-link", auth, async (req, res) => {
   const { fields, originalUrl } = req.body;
-
-  // Generate unique ID for the form
   const formId = shortid.generate();
 
   try {
@@ -15,9 +16,9 @@ router.post("/generate-link", async (req, res) => {
       formId,
       fields,
       originalUrl,
+      createdBy: req.user, // Add user who created the form
     });
-
-    await newForm.save(); // Save the form in MongoDB
+    await newForm.save();
 
     res.json({ formLink: `http://localhost:5000/api/form/${formId}` });
   } catch (error) {
@@ -25,6 +26,29 @@ router.post("/generate-link", async (req, res) => {
     res.status(500).send("Error generating form link");
   }
 });
+
+// Generate new form link
+// router.post("/generate-link", async (req, res) => {
+//   const { fields, originalUrl } = req.body;
+
+//   // Generate unique ID for the form
+//   const formId = shortid.generate();
+
+//   try {
+//     const newForm = new Form({
+//       formId,
+//       fields,
+//       originalUrl,
+//     });
+
+//     await newForm.save(); // Save the form in MongoDB
+
+//     res.json({ formLink: `http://localhost:5000/api/form/${formId}` });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).send("Error generating form link");
+//   }
+// });
 
 // Serve the form based on the generated link
 router.get("/form/:id", async (req, res) => {
