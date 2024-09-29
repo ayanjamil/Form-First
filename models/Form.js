@@ -14,6 +14,10 @@ const formSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  userEmail: {
+    type: String, // Add this field to store the email of the user who created the form
+    required: true,
+  },
   submissions: [
     {
       type: Map, // Using Map to store key-value pairs (e.g., name: "John", email: "john@example.com")
