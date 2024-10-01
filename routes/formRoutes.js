@@ -12,6 +12,7 @@ const User = require("../models/User");
 router.post("/generate-link", auth, async (req, res) => {
   const { fields, originalUrl, userEmail } = req.body;
   const formId = shortid.generate();
+  console.log("USER : ", req.user);
 
   try {
     const newForm = new Form({
@@ -19,6 +20,7 @@ router.post("/generate-link", auth, async (req, res) => {
       fields,
       originalUrl,
       userEmail,
+      createdBy: req.user, // Add the authenticated user ID
       // createdBy: req.user, // Add user who created the form
     });
     await newForm.save();
@@ -30,6 +32,16 @@ router.post("/generate-link", auth, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).send("Error generating form link");
+  }
+});
+
+router.get("/all-forms", auth, async (req, res) => {
+  try {
+    const forms = await Form.find({ createdBy: req.user });
+    res.json(forms);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Error fetching forms");
   }
 });
 

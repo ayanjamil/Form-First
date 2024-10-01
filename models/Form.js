@@ -24,6 +24,11 @@ const formSchema = new mongoose.Schema({
       of: String,
     },
   ],
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
 });
 
 module.exports = mongoose.model("Form", formSchema);
