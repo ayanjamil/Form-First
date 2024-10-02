@@ -49,6 +49,7 @@ router.get("/export/:formId", async (req, res) => {
   try {
     const { formId } = req.params;
     const form = await Form.findOne({ formId });
+    const formFields = form.fields;
 
     if (!form || !form.submissions || form.submissions.length === 0) {
       return res.status(404).send("No submissions found for this form.");
@@ -58,40 +59,45 @@ router.get("/export/:formId", async (req, res) => {
     const workbook = new excel.Workbook();
     const worksheet = workbook.addWorksheet("Submissions");
 
-    // Add column headers (Adjust this based on your form fields)
-    worksheet.columns = [
-      { header: "S.No", key: "s_no", width: 10 },
-      { header: "Name", key: "name", width: 30 },
-      { header: "Email", key: "email", width: 30 },
-      // Add other form fields if necessary
-    ];
+    // Add the "S.No" column header
+    const columns = [{ header: "S.No", key: "s_no", width: 10 }];
 
-    // Map form submissions to worksheet rows
-    console.log("SUBMISSION : ", form.submissions);
-    form.submissions.forEach((submission, index) => {
-      // Since submission is a Map, use get() to retrieve the values
-      worksheet.addRow({
-        s_no: index + 1,
-        name: submission.get("name"),
-        email: submission.get("email"),
-      });
+    // Dynamically add column headers based on formFields
+    formFields.forEach((field, index) => {
+      columns.push({ header: field, key: field, width: 30 });
     });
 
-    // Send the Excel file
+    worksheet.columns = columns;
+
+    // Map form submissions to worksheet rows
+    form.submissions.forEach((submission, index) => {
+      const row = {
+        s_no: index + 1,
+      };
+
+      // mapping data of submission with the rows of sheet
+      formFields.forEach((field) => {
+        row[field] = submission.get(field);
+      });
+
+      worksheet.addRow(row);
+    });
+
+    // Set response headers and send the Excel file
     res.setHeader(
       "Content-Type",
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     );
     res.setHeader(
       "Content-Disposition",
-      "attachment; filename=" + "form-submissions.xlsx"
+      `attachment; filename=form_submissions_${formId}.xlsx`
     );
 
     await workbook.xlsx.write(res);
     res.end();
   } catch (error) {
-    console.error("Error exporting data:", error);
-    res.status(500).send("Error exporting form submissions");
+    console.error(error);
+    res.status(500).send("Error exporting submissions");
   }
 });
 
